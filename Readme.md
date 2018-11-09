@@ -1,4 +1,4 @@
-# Stock Orders Matcher
+# Stock Matcher
 
 ## Intro
 
@@ -10,9 +10,10 @@ Produces result.txt with final account states.
 sbt run
 ```
 
+
+
 ## Features
-* self-orders prevention (covered by unit-test also).
+* self-orders are not allowed (covered by unit-test also).
 * Negative stock accounts are allowed for simplicity.
+* Debug is on by default, to play market evolution.
 * Implemented in Akka Actors to make parallelization of operations possible.
-* Features `become` and `stash` patterns from Akka Actors.
-* Debug level is on by default, to play with market evolution.
