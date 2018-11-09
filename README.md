@@ -11,7 +11,7 @@ sbt run
 ```
 
 ## Features
-* self-orders prevention (covered by unit-test also).
+* Self-orders prevention (covered by unit-test also).
 * Negative stock accounts are allowed for simplicity.
 * Implemented in Akka Actors to make parallelization of operations possible.
 * Features `become` and `stash` patterns from Akka Actors.
