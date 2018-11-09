@@ -8,7 +8,7 @@ import scala.concurrent.duration._
 
 
 
-case class StockSession(initialState:Iterator[ClientState], orders:Iterator[Order])(implicit timeout: Timeout = Timeout(1 minute)) {
+case class StockSession(initialState:Iterator[ClientState], orders:Iterator[Order])(implicit timeout: Timeout = Timeout(5 minutes)) {
 
 
   private val system = ActorSystem("stockSessionActorSystem")
