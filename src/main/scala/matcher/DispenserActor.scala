@@ -2,7 +2,7 @@ package matcher
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Stash}
 
-class DispenserActor(stockActors: Map[Char, ActorRef]) extends Actor with Stash with ActorLogging {
+class DispenserActor(stockActors: Map[Char, ActorRef],clientStateActor:ActorRef) extends Actor with Stash with ActorLogging {
 
 
   import context._
@@ -11,16 +11,34 @@ class DispenserActor(stockActors: Map[Char, ActorRef]) extends Actor with Stash 
   var counter = 0
 
   def receive: Receive = {
+
+
+
     case io: Order => {
-      log.debug(s"Order accepted ${io}")
-      stockActors(io.abcd) ! io
+      log.debug(s"Order has been sent for approval ${io}")
+      clientStateActor ! PleaseApproveThisOrder(io)
       unstashAll()
-      become(waitForN)
+      become(waitForApproval)
     }
 
     case CancelAllOrders() => stockActors.values.foreach(a => a.!(CancelAllOrders())(sender()))
 
     case msg => stash()
+  }
+  def waitForApproval: Receive = {
+    case OrderApproved(io) ⇒ {
+      log.debug(s"Order approved and will be sent ${io}")
+      stockActors(io.abcd) ! io
+      unstashAll()
+      become(waitForN)
+    }
+    case OrderDenied() ⇒ {
+      log.debug(s"Order denied")
+      unstashAll()
+      become(receive)
+    }
+    case msg => stash()
+
   }
 
 

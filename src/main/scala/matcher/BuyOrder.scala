@@ -1,7 +1,5 @@
 package matcher
 
-import akka.actor.ActorRef
-
 case class BuyOrder(client: Client, abcd: Char, price: Int, quantity: Int) extends Order {
   override def getTransactionsAndEffects(optCounterpart: Option[(Client, List[Client])]): (List[UpdateClientState], List[UpdateStock]) = optCounterpart match {
     case Some((seller, newListOfSellers)) =>

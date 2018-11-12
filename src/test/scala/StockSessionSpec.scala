@@ -43,4 +43,24 @@ class StockSessionSpec extends FlatSpec {
         |C2	200	0	0	0	0""".stripMargin)
   }
 
+
+  "Session " should "prevent orders which lead to negative account value" in {
+
+
+    val initialState: Iterator[ClientState] = List(
+      ClientState("C1", 100, scala.collection.mutable.Map.empty),
+      ClientState("C2", 0, scala.collection.mutable.Map('A' -> 10))
+    ).toIterator
+
+    val orders: Iterator[Order] = List(
+      SellOrder("C2", 'A', 100, 10),
+      BuyOrder("C1", 'A', 100, 10)
+
+    ).toIterator
+
+    assert(StockSession(initialState, orders).result ==
+      """C1	100	0	0	0	0
+        |C2	0	10	0	0	0""".stripMargin)
+  }
+
 }

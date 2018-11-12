@@ -31,7 +31,19 @@ class ClientStatesActor extends Actor {
         countBeforePrint += -1
         if (countBeforePrint == 0) sender() ! getStateString
       }
+
+      case PleaseApproveThisOrder(o) => sender() ! approveOrDeny(o)
+
+
     }
+
+  private def approveOrDeny(o:Order):OrderApproveResult = o match {
+    case SellOrder(client: Client, abcd: Char, price: Int, quantity: Int) =>
+      if (states.get(client).flatMap(c => c.stock.get(abcd)).exists(count => count >= quantity)) OrderApproved(o) else OrderDenied()
+    case BuyOrder(client: Client, abcd: Char, price: Int, quantity: Int) =>
+      if (states.get(client).exists(c => c.money >= price * quantity)) OrderApproved(o) else OrderDenied()
+
+  }
 
   private def getStateString: String =
     (for {

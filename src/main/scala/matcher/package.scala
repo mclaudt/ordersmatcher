@@ -23,6 +23,12 @@ package object matcher {
 
     case class UpdateStockWithNewClient(bs: Char, price: Int, quantity: Int, client: Client) extends UpdateStock
 
+  case class PleaseApproveThisOrder(oder:Order)
+
+  sealed trait OrderApproveResult
+  case class OrderApproved(io: Order) extends OrderApproveResult
+  case class OrderDenied() extends OrderApproveResult
+
 
   // DispenserActor
   case class WaitForNResponses(n: Int)
