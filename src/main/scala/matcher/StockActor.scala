@@ -23,7 +23,7 @@ class StockActor(abcd: Char, clientStateActor: ActorRef) extends Actor with Acto
 
     case UpdateStockWithNewClient(bs, price, quantity, newClient) => {
       val oldList = state(bs).getOrElseUpdate(price, scala.collection.mutable.Map[Int, List[Client]](quantity -> List())).getOrElseUpdate(quantity, List())
-      state(bs)(price)(quantity) = newClient +: oldList
+      state(bs)(price)(quantity) = oldList :+ newClient
     }
 
     case _ => log.error("Unknown UpdateStock operation")
