@@ -5,7 +5,6 @@ class StockSessionSpec extends FlatSpec {
 
   "A basic two-client session " should "produce a simple exchange" in {
 
-
     val initialState: Iterator[ClientState] = List(
       ClientState("C1", 100, scala.collection.mutable.Map.empty),
       ClientState("C2", 0, scala.collection.mutable.Map('A' -> 1))
@@ -20,11 +19,11 @@ class StockSessionSpec extends FlatSpec {
     assert(StockSession(initialState, orders).result ==
       """C1	0	1	0	0	0
         |C2	100	0	0	0	0""".stripMargin)
+
   }
 
 
   "Session " should "prevent orders of client with himelf" in {
-
 
     val initialState: Iterator[ClientState] = List(
       ClientState("C1", 100, scala.collection.mutable.Map.empty),
@@ -41,6 +40,7 @@ class StockSessionSpec extends FlatSpec {
     assert(StockSession(initialState, orders).result ==
       """C1	0	1	0	0	0
         |C2	200	0	0	0	0""".stripMargin)
+
   }
 
 
@@ -61,6 +61,7 @@ class StockSessionSpec extends FlatSpec {
     assert(StockSession(initialState, orders).result ==
       """C1	100	0	0	0	0
         |C2	0	10	0	0	0""".stripMargin)
+
   }
 
 }

@@ -1,6 +1,5 @@
 import java.io.{File, FileWriter}
-
-import matcher.Run.res
+import scala.io.Source
 
 package object matcher {
 
@@ -31,6 +30,7 @@ package object matcher {
 
 
   // DispenserActor
+
   case class WaitForNResponses(n: Int)
 
 
@@ -46,12 +46,41 @@ package object matcher {
   def writeToFile(file: File, str: String): Unit = {
     val writer = new FileWriter(file)
     try {
-      writer.append(res).append("\n")
+      writer.append(str).append("\n")
     }
     finally {
       writer.close()
     }
 
   }
+
+  def getInitialStateFromResources(fileName:String): Iterator[ClientState] = Source.fromResource(fileName).getLines.map(l => {
+    l.split("\t").map(s => s.trim) match {
+      case Array(name, money, a, b, c, d) =>
+        ClientState(
+          name,
+          money.toInt,
+          scala.collection.mutable.Map(
+            'A' -> a.toInt,
+            'B' -> b.toInt,
+            'C' -> c.toInt,
+            'D' -> d.toInt
+          )
+        )
+    }
+  })
+
+  def getOrdersFromFileInResources(fileName:String): Iterator[Order] = Source.fromResource(fileName).getLines.map(l => {
+    l.split("\t").map(s => s.trim) match {
+      case Array(client, bs, abcd, price, quantity) => {
+
+        bs.head match {
+          case 'b' => SellOrder(client, abcd.head, price.toInt, quantity.toInt)
+          case 's' => BuyOrder(client, abcd.head, price.toInt, quantity.toInt)
+        }
+      }
+
+    }
+  })
 
 }
