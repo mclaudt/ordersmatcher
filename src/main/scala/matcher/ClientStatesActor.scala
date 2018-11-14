@@ -1,16 +1,37 @@
 package matcher
 
-import akka.actor.Actor
+import akka.actor.{Actor, Props}
+import matcher.DispenserActor.{OperationHasBeenPerformedConfirmation, OrderApproveResult, OrderApproved, OrderDenied}
 
-class ClientStatesActor extends Actor {
+
+object ClientStatesActor {
+
+  def props(): Props = Props(classOf[ClientStatesActor])
+
+  case class SetClientState(clientState: ClientState)
+
+  sealed trait UpdateClientState
+
+    case class UpdateClientStateMoney(name: Client, money: Int) extends UpdateClientState
+
+    case class UpdateClientStateStock(name: Client, ticker: Char, quantity: Quantity) extends UpdateClientState
+
+  case class PleaseApproveThisOrder(order: Order)
+
+}
+
+
+case class ClientStatesActor() extends Actor {
 
     private val states = scala.collection.mutable.Map[Client, ClientState]()
 
     private var countBeforePrint = 4
 
+    import ClientStatesActor._
+
     def receive:Receive = {
 
-      case c@ClientState(name, _, _) => states(name) = c
+      case SetClientState(c@ClientState(name, _, _)) => states(name) = c
 
       case UpdateClientStateMoney(name: Client, money: Int) =>
         val currentAccount = states(name)
@@ -27,7 +48,6 @@ class ClientStatesActor extends Actor {
         if (countBeforePrint == 0) sender() ! getStateString
 
       case PleaseApproveThisOrder(o) => sender() ! approveOrDeny(o)
-
 
     }
 
@@ -54,4 +74,6 @@ class ClientStatesActor extends Actor {
     }).toList.sorted.mkString("\n")
 
   }
+
+
 

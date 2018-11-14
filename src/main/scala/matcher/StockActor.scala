@@ -1,35 +1,46 @@
 package matcher
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import matcher.ClientStatesActor.{UpdateClientStateMoney, UpdateClientStateStock}
+import matcher.DispenserActor.WaitForNConfirmations
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 class StockActor(ticker: Char, clientStateActor: ActorRef) extends Actor with ActorLogging {
 
-  type Counterparts = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[Int, List[Client]]]
+  import StockActor._
 
-  val stateBuyers: mutable.Map[Int, mutable.Map[Int, List[Client]]] = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[Int, List[Client]]]()
-  val stateSellers: mutable.Map[Int, mutable.Map[Int, List[Client]]] = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[Int, List[Client]]]()
 
-  val state = Map(
+  type Counterparts = scala.collection.mutable.Map[Price, scala.collection.mutable.Map[Quantity, List[Client]]]
+
+  private val stateBuyers = scala.collection.mutable.Map[Price, scala.collection.mutable.Map[Quantity, List[Client]]]()
+  private val stateSellers = scala.collection.mutable.Map[Price, scala.collection.mutable.Map[Quantity, List[Client]]]()
+
+  private val state = Map(
     'b' -> stateBuyers,
     's' -> stateSellers
   )
 
-  private def serveUpdateStock(u: UpdateStock): Unit = u match {
+  def receive: Receive = {
 
-    case UpdateStockWithNewList(bs, price, quantity, newListOfCounterparts) => state(bs)(price)(quantity) = newListOfCounterparts
+    case ProcessThisOrder(io) => serveInitialOrder(io, sender())
 
-    case UpdateStockWithNewClient(bs, price, quantity, newClient) =>
-      val oldList = state(bs).getOrElseUpdate(price, scala.collection.mutable.Map[Int, List[Client]](quantity -> List())).getOrElseUpdate(quantity, List())
-      state(bs)(price)(quantity) = oldList :+ newClient
-
-    case _ => log.error("Unknown UpdateStock operation")
-
+    case CancelAllOrders() =>
+      //Возвращаем деньги покупателям
+      ((for {
+        (price, map) <- stateBuyers
+        (quantity, clients) <- map
+        client <- clients
+      } yield UpdateClientStateMoney(client, +quantity * price)) ++
+        //Возвращаем акции продавцам
+        (for {
+          (_, map) <- stateSellers
+          (quantity, clients) <- map
+          client <- clients
+        } yield UpdateClientStateStock(client, ticker, +quantity))).foreach(u => clientStateActor ! u)
+      clientStateActor.!(CancelAllOrders())(sender())
 
   }
-
 
   private def serveInitialOrder(io: Order, sender: ActorRef): Unit = {
 
@@ -49,28 +60,18 @@ class StockActor(ticker: Char, clientStateActor: ActorRef) extends Actor with Ac
 
   }
 
+  private def serveUpdateStock(u: UpdateStock): Unit = u match {
 
-  def receive: Receive = {
+    case UpdateStockWithNewList(bs, price, quantity, newListOfCounterparts) => state(bs)(price)(quantity) = newListOfCounterparts
 
-    case io: Order => serveInitialOrder(io, sender())
+    case UpdateStockWithNewClient(bs, price, quantity, newClient) =>
+      val oldList = state(bs).getOrElseUpdate(price, scala.collection.mutable.Map[Quantity, List[Client]](quantity -> List())).getOrElseUpdate(quantity, List())
+      state(bs)(price)(quantity) = oldList :+ newClient
 
-    case CancelAllOrders() =>
-      //Возвращаем деньги покупателям
-      ((for {
-        (price, map) <- stateBuyers
-        (quantity, clients) <- map
-        client <- clients
-      } yield UpdateClientStateMoney(client, +quantity * price)) ++
-        //Возвращаем акции продавцам
-        (for {
-          (_, map) <- stateSellers
-          (quantity, clients) <- map
-          client <- clients
-        } yield UpdateClientStateStock(client, ticker, +quantity))).foreach(u => clientStateActor ! u)
-      clientStateActor.!(CancelAllOrders())(sender())
+    case _ => log.error("Unknown UpdateStock operation")
+
 
   }
-
 
   private def findCounterpart(io: Order): Option[(Client, List[Client])] = {
 
@@ -87,5 +88,19 @@ class StockActor(ticker: Char, clientStateActor: ActorRef) extends Actor with Ac
   }
 
 
+
+}
+
+object StockActor {
+
+  def props(ticker: Char, clientStateActor: ActorRef): Props = Props(new StockActor(ticker, clientStateActor))
+
+  sealed trait UpdateStock
+
+    case class UpdateStockWithNewList(bs: Char, price: Int, quantity: Int, newListOfClients: List[Client]) extends UpdateStock
+
+    case class UpdateStockWithNewClient(bs: Char, price: Int, quantity: Int, client: Client) extends UpdateStock
+
+  case class ProcessThisOrder(order:Order)
 
 }

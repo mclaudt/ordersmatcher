@@ -1,6 +1,6 @@
 package matcher
 
-import matcher.IOUtils.{getInitialStateFromResources, getOrdersFromFileInResources}
+import IOUtils.{getInitialStateFromResources, getOrdersFromFileInResources}
 
 class ProcessInputFilesFromResources(val initialStateFileName:String, val ordersFileName:String, val resultFileName:String) {
 

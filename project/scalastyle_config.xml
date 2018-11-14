@@ -120,7 +120,7 @@
         </parameters>
     </check>
     <check level="warning" class="org.scalastyle.scalariform.ImportGroupingChecker" enabled="false"/>
-    <check enabled="true" class="org.scalastyle.file.RegexChecker" level="warning">
+    <check level="warning" class="org.scalastyle.file.RegexChecker" enabled="true">
         <parameters>
             <parameter name="regex">(?m)^\s\*$(\r|)\n^\s*$(\r|)\n</parameter>
         </parameters>

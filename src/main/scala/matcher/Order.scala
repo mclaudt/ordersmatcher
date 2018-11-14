@@ -1,5 +1,8 @@
 package matcher
 
+import matcher.ClientStatesActor.UpdateClientState
+import matcher.StockActor.UpdateStock
+
 trait Order {
   def client: Client
 

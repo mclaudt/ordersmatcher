@@ -1,6 +1,8 @@
 package matcher
 
-import akka.actor.ActorRef
+import matcher.ClientStatesActor.{UpdateClientState, UpdateClientStateMoney, UpdateClientStateStock}
+import matcher.StockActor.{UpdateStock, UpdateStockWithNewClient, UpdateStockWithNewList}
+
 
 case class SellOrder(client: Client, ticker: Char, price: Int, quantity: Int) extends Order {
 

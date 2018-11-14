@@ -32,7 +32,7 @@ class StockSessionSpec extends FlatSpec {
   }
 
 
-  "Session " should "prevent orders of client with himself" in {
+  it should "prevent orders of client with himself" in {
 
     val initialState: Iterator[ClientState] = List(
       ClientState(client1, 100),
@@ -53,7 +53,7 @@ class StockSessionSpec extends FlatSpec {
   }
 
 
-  "Session " should "prevent orders which lead to negative account value" in {
+  it should "prevent orders which lead to negative account value" in {
 
 
     val initialState: Iterator[ClientState] = List(

@@ -1,5 +1,8 @@
 package matcher
 
+import matcher.ClientStatesActor.{UpdateClientState, UpdateClientStateMoney, UpdateClientStateStock}
+import matcher.StockActor.{UpdateStock, UpdateStockWithNewClient, UpdateStockWithNewList}
+
 case class BuyOrder(client: Client, ticker: Char, price: Int, quantity: Int) extends Order {
   override def getTransactionsAndEffects(optCounterpart: Option[(Client, List[Client])]): (List[UpdateClientState], List[UpdateStock]) = optCounterpart match {
     case Some((seller, newListOfSellers)) =>

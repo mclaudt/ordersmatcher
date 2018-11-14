@@ -3,6 +3,9 @@ package matcher
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import matcher.ClientStatesActor.SetClientState
+import matcher.DispenserActor.IncomingOrder
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -13,16 +16,16 @@ case class StockSession(initialState:Iterator[ClientState], orders:Iterator[Orde
 
   private val system = ActorSystem("stockSessionActorSystem")
 
-  private val clientStateActor = system.actorOf(Props[ClientStatesActor], name = "clientStateActor")
+  private val clientStateActor = system.actorOf(ClientStatesActor.props(), name = "clientStateActor")
 
   private val stockActors: Map[Char, ActorRef] =
 
-    List('A', 'B', 'C', 'D').map(ticker => ticker -> system.actorOf(Props(classOf[StockActor], ticker, clientStateActor), name = s"stockActor$ticker")).toMap
+    List('A', 'B', 'C', 'D').map(ticker => ticker -> system.actorOf(StockActor.props(ticker, clientStateActor), name = s"stockActor$ticker")).toMap
 
-  private val dispenserActor = system.actorOf(Props(classOf[DispenserActor], stockActors,clientStateActor), name = "dispenserActor")
+  private val dispenserActor = system.actorOf(DispenserActor.props(stockActors,clientStateActor), name = "dispenserActor")
 
-  initialState.foreach(s=> clientStateActor ! s)
-  orders.foreach(o=>dispenserActor ! o)
+  initialState.foreach(s=> clientStateActor ! SetClientState(s))
+  orders.foreach(o=>dispenserActor ! IncomingOrder(o))
 
 
 
