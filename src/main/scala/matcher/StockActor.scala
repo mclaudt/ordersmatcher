@@ -2,29 +2,28 @@ package matcher
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 
-import collection.mutable.ArrayBuffer._
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class StockActor(abcd: Char, clientStateActor: ActorRef) extends Actor with ActorLogging {
+class StockActor(ticker: Char, clientStateActor: ActorRef) extends Actor with ActorLogging {
 
   type Counterparts = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[Int, List[Client]]]
 
-  var stateBuyers = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[Int, List[Client]]]()
-  var stateCellers = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[Int, List[Client]]]()
+  val stateBuyers: mutable.Map[Int, mutable.Map[Int, List[Client]]] = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[Int, List[Client]]]()
+  val stateSellers: mutable.Map[Int, mutable.Map[Int, List[Client]]] = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[Int, List[Client]]]()
 
   val state = Map(
     'b' -> stateBuyers,
-    's' -> stateCellers
+    's' -> stateSellers
   )
 
   private def serveUpdateStock(u: UpdateStock): Unit = u match {
 
     case UpdateStockWithNewList(bs, price, quantity, newListOfCounterparts) => state(bs)(price)(quantity) = newListOfCounterparts
 
-    case UpdateStockWithNewClient(bs, price, quantity, newClient) => {
+    case UpdateStockWithNewClient(bs, price, quantity, newClient) =>
       val oldList = state(bs).getOrElseUpdate(price, scala.collection.mutable.Map[Int, List[Client]](quantity -> List())).getOrElseUpdate(quantity, List())
       state(bs)(price)(quantity) = oldList :+ newClient
-    }
 
     case _ => log.error("Unknown UpdateStock operation")
 
@@ -36,11 +35,11 @@ class StockActor(abcd: Char, clientStateActor: ActorRef) extends Actor with Acto
 
     val c = findCounterpart(io)
 
-    if (c.isDefined) log.debug(s"We have a deal: order=${io}, counterpart=${c.get._1}")
+    if (c.isDefined) log.debug(s"We have a deal: order=$io, counterpart=${c.get._1}")
 
     val t = io.getTransactionsAndEffects(c)
 
-    sender ! WaitForNResponses(t._1.length)
+    sender ! WaitForNConfirmations(t._1.length)
 
 
     t._2.foreach(u => serveUpdateStock(u))
@@ -55,7 +54,7 @@ class StockActor(abcd: Char, clientStateActor: ActorRef) extends Actor with Acto
 
     case io: Order => serveInitialOrder(io, sender())
 
-    case CancelAllOrders() => {
+    case CancelAllOrders() =>
       //Возвращаем деньги покупателям
       ((for {
         (price, map) <- stateBuyers
@@ -64,13 +63,11 @@ class StockActor(abcd: Char, clientStateActor: ActorRef) extends Actor with Acto
       } yield UpdateClientStateMoney(client, +quantity * price)) ++
         //Возвращаем акции продавцам
         (for {
-          (price, map) <- stateCellers
+          (_, map) <- stateSellers
           (quantity, clients) <- map
           client <- clients
-        } yield UpdateClientStateStock(client, abcd, +quantity))).foreach(u => clientStateActor ! u)
+        } yield UpdateClientStateStock(client, ticker, +quantity))).foreach(u => clientStateActor ! u)
       clientStateActor.!(CancelAllOrders())(sender())
-
-    }
 
   }
 
@@ -79,7 +76,7 @@ class StockActor(abcd: Char, clientStateActor: ActorRef) extends Actor with Acto
 
     val c: Counterparts = io match {
       case SellOrder(_, _, _, _) => stateBuyers
-      case BuyOrder(_, _, _, _) => stateCellers
+      case BuyOrder(_, _, _, _) => stateSellers
     }
 
     for {

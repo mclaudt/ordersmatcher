@@ -4,33 +4,27 @@ import akka.actor.Actor
 
 class ClientStatesActor extends Actor {
 
-    private var states = scala.collection.mutable.Map[Client, ClientState]()
+    private val states = scala.collection.mutable.Map[Client, ClientState]()
 
     private var countBeforePrint = 4
 
     def receive:Receive = {
 
-      case c@ClientState(name, _, _) => {
-        states(name) = c
+      case c@ClientState(name, _, _) => states(name) = c
 
-      }
-      case UpdateClientStateMoney(name: Client, money: Int) => {
+      case UpdateClientStateMoney(name: Client, money: Int) =>
         val currentAccount = states(name)
         states(name) = currentAccount.copy(money = currentAccount.money + money)
-        sender() ! "tick"
-      }
+        sender() ! OperationHasBeenPerformedConfirmation()
 
+      case UpdateClientStateStock(name, ticker, quantity) =>
+        states(name).stock.getOrElseUpdate(ticker, 0)
+        states(name).stock(ticker) = states(name).stock(ticker) + quantity
+        sender() ! OperationHasBeenPerformedConfirmation()
 
-      case UpdateClientStateStock(name, abcd, quantity) => {
-        states(name).stock.getOrElseUpdate(abcd, 0)
-        states(name).stock(abcd) = states(name).stock(abcd) + quantity
-        sender() ! "tick"
-      }
-
-      case CancelAllOrders() => {
+      case CancelAllOrders() =>
         countBeforePrint += -1
         if (countBeforePrint == 0) sender() ! getStateString
-      }
 
       case PleaseApproveThisOrder(o) => sender() ! approveOrDeny(o)
 
@@ -38,9 +32,9 @@ class ClientStatesActor extends Actor {
     }
 
   private def approveOrDeny(o:Order):OrderApproveResult = o match {
-    case SellOrder(client: Client, abcd: Char, price: Int, quantity: Int) =>
-      if (states.get(client).flatMap(c => c.stock.get(abcd)).exists(count => count >= quantity)) OrderApproved(o) else OrderDenied()
-    case BuyOrder(client: Client, abcd: Char, price: Int, quantity: Int) =>
+    case SellOrder(client, ticker, _ , quantity) =>
+      if (states.get(client).flatMap(c => c.stock.get(ticker)).exists(count => count >= quantity)) OrderApproved(o) else OrderDenied()
+    case BuyOrder(client, _ , price, quantity) =>
       if (states.get(client).exists(c => c.money >= price * quantity)) OrderApproved(o) else OrderDenied()
 
   }

@@ -2,14 +2,14 @@ package matcher
 
 import akka.actor.ActorRef
 
-case class SellOrder(client: Client, abcd: Char, price: Int, quantity: Int) extends Order {
+case class SellOrder(client: Client, ticker: Char, price: Int, quantity: Int) extends Order {
 
   override def getTransactionsAndEffects(optCounterpart: Option[(Client, List[Client])]): (List[UpdateClientState], List[UpdateStock]) = optCounterpart match {
     case Some((buyer, newListOfBuyers)) =>
       (
         List(
-          UpdateClientStateStock(client, abcd, -quantity),
-          UpdateClientStateStock(buyer, abcd, +quantity),
+          UpdateClientStateStock(client, ticker, -quantity),
+          UpdateClientStateStock(buyer, ticker, +quantity),
           UpdateClientStateMoney(client, +quantity * price)
         )
         ,
@@ -17,7 +17,7 @@ case class SellOrder(client: Client, abcd: Char, price: Int, quantity: Int) exte
       )
     case None =>
       (
-        List(UpdateClientStateStock(client, abcd, -quantity))
+        List(UpdateClientStateStock(client, ticker, -quantity))
         ,
         List(UpdateStockWithNewClient('s', price, quantity, client))
       )

@@ -17,7 +17,7 @@ case class StockSession(initialState:Iterator[ClientState], orders:Iterator[Orde
 
   private val stockActors: Map[Char, ActorRef] =
 
-    List('A', 'B', 'C', 'D').map(c => c -> system.actorOf(Props(classOf[StockActor], c, clientStateActor), name = s"stockActor${c}")).toMap
+    List('A', 'B', 'C', 'D').map(ticker => ticker -> system.actorOf(Props(classOf[StockActor], ticker, clientStateActor), name = s"stockActor$ticker")).toMap
 
   private val dispenserActor = system.actorOf(Props(classOf[DispenserActor], stockActors,clientStateActor), name = "dispenserActor")
 

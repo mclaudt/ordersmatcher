@@ -3,7 +3,7 @@ package matcher
 trait Order {
   def client: Client
 
-  def abcd: Char
+  def ticker: Char
 
   def price: Int
 
