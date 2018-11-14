@@ -17,7 +17,7 @@ object IOUtils {
           ClientState(
             name,
             money.toInt,
-            scala.collection.mutable.Map(
+            Map(
               'A' -> a.toInt,
               'B' -> b.toInt,
               'C' -> c.toInt,

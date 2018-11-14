@@ -8,7 +8,7 @@ package object matcher {
 
   // ClientStateActor
 
-  case class ClientState(name: Client, money: Int, stock: scala.collection.mutable.Map[Char, Int])
+  case class ClientState(name: Client, money: Int, stock: Map[Char, Int] = Map.empty.withDefaultValue(0))
 
   sealed trait UpdateClientState
 

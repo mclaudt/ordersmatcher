@@ -18,8 +18,8 @@ class ClientStatesActor extends Actor {
         sender() ! OperationHasBeenPerformedConfirmation()
 
       case UpdateClientStateStock(name, ticker, quantity) =>
-        states(name).stock.getOrElseUpdate(ticker, 0)
-        states(name).stock(ticker) = states(name).stock(ticker) + quantity
+        val previousClientState = states(name)
+        states(name) = previousClientState.copy(stock = previousClientState.stock.updated(ticker, previousClientState.stock(ticker) + quantity))
         sender() ! OperationHasBeenPerformedConfirmation()
 
       case CancelAllOrders() =>
