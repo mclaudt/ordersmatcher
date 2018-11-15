@@ -6,6 +6,20 @@ import matcher.DispenserActor.WaitForNConfirmations
 
 import scala.collection.mutable.ArrayBuffer
 
+object StockActor {
+
+  def props(ticker: Char, clientStateActor: ActorRef): Props = Props(new StockActor(ticker, clientStateActor))
+
+  sealed trait UpdateStock
+
+  case class UpdateStockWithNewList(bs: Char, price: Int, quantity: Int, newListOfClients: List[Client]) extends UpdateStock
+
+  case class UpdateStockWithNewClient(bs: Char, price: Int, quantity: Int, client: Client) extends UpdateStock
+
+  case class ProcessThisOrder(order:Order)
+
+}
+
 class StockActor(ticker: Char, clientStateActor: ActorRef) extends Actor with ActorLogging {
 
   import StockActor._
@@ -88,19 +102,5 @@ class StockActor(ticker: Char, clientStateActor: ActorRef) extends Actor with Ac
   }
 
 
-
-}
-
-object StockActor {
-
-  def props(ticker: Char, clientStateActor: ActorRef): Props = Props(new StockActor(ticker, clientStateActor))
-
-  sealed trait UpdateStock
-
-    case class UpdateStockWithNewList(bs: Char, price: Int, quantity: Int, newListOfClients: List[Client]) extends UpdateStock
-
-    case class UpdateStockWithNewClient(bs: Char, price: Int, quantity: Int, client: Client) extends UpdateStock
-
-  case class ProcessThisOrder(order:Order)
 
 }

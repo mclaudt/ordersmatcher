@@ -3,6 +3,8 @@ import java.nio.file.Paths
 
 package object matcher {
 
+  val countOfTickers = 4
+
   type Client = String
 
   type Price = Int

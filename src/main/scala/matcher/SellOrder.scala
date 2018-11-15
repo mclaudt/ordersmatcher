@@ -25,3 +25,4 @@ case class SellOrder(client: Client, ticker: Char, price: Int, quantity: Int) ex
       )
   }
 }
+

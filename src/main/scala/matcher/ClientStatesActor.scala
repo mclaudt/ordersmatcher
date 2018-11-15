@@ -25,7 +25,7 @@ case class ClientStatesActor() extends Actor {
 
     private val states = scala.collection.mutable.Map[Client, ClientState]()
 
-    private var countBeforePrint = 4
+    private var countBeforePrint = countOfTickers
 
     import ClientStatesActor._
 
@@ -74,6 +74,3 @@ case class ClientStatesActor() extends Actor {
     }).toList.sorted.mkString("\n")
 
   }
-
-
-

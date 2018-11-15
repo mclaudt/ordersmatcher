@@ -27,16 +27,10 @@ case class StockSession(initialState:Iterator[ClientState], orders:Iterator[Orde
   initialState.foreach(s=> clientStateActor ! SetClientState(s))
   orders.foreach(o=>dispenserActor ! IncomingOrder(o))
 
-
-
-
-
-
   def result: String = {val res = Await.result(dispenserActor ? CancelAllOrders(), timeout.duration).asInstanceOf[String]
     system.terminate
     res
   }
-
 
 
 }
